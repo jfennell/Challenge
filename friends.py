@@ -48,32 +48,32 @@ class Trie(object):
 		Note that an edit is an insert, delete, or replace.
 		"""
 		strings = []
-		self._find_edits(s, maxedit, [], self.root, strings)
+		self._find_edits('', s, maxedit, self.root, strings)
 		return strings
 
-	def _find_edits(self, suffix, maxedit, prefix, node, strings):
+	def _find_edits(self, prefix, suffix, maxedit, node, strings):
 		if maxedit < 0:
 			return
 
 		# If our consumed string matches a word in the dict, add it
-		if len(suffix) == 0 and node.is_word:
-			strings.append(prefix)
+		if len(suffix) == 0:
+			if node.is_word:
+				strings.append(prefix)
 			return
 
 		c = suffix[0]
 
-		# No edits
-		if c == node.char:
-			for child in node.children.itervalues():
-				self._find_edits(suffix[1:], maxedit, prefix + c, child, strings)
-		else:
-			for child in node.children.itervalues():
+		for child in node.children.itervalues():
+			# No edits
+			if c == child.char:
+				self._find_edits(prefix + c, suffix[1:], maxedit, child, strings)
+			else:
 				# Insert
-				self._find_edits(suffix, maxedit-1, prefix + node.char, child, strings)
+				self._find_edits(prefix + child.char, suffix, maxedit-1, child, strings)
 				# Delete
-				self._find_edits(suffix[1:], maxedit-1, prefix, child, strings)
+				self._find_edits(prefix, suffix[1:], maxedit-1, child, strings)
 				# Replace
-				self._find_edits(suffix[1:], maxedit-1, prefix + node.char, child, strings)
+				self._find_edits(prefix + child.char, suffix[1:], maxedit-1, child, strings)
 			
 	def __contains__(self, s):
 		curr = self.root
