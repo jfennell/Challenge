@@ -11,6 +11,7 @@ This module tries to solve this problem.
 
 Checked the charset of the dictionary.  It is just a-z, which makes things simpler.
 """
+import datetime
 
 class Node(object):
 	__slots__ = ['char', 'is_word', 'children']
@@ -64,19 +65,22 @@ class Trie(object):
 		c = suffix[0]
 
 		for child in node.children.itervalues():
-			# No edits
 			if c == child.char:
+				# No edit
 				self._find_edits(prefix + c, suffix[1:], maxedit, child, strings)
 			else:
-				# Insert
-				self._find_edits(prefix + child.char, suffix, maxedit-1, child, strings)
-				# Delete
-				self._find_edits(prefix, suffix[1:], maxedit-1, child, strings)
 				# Replace
 				self._find_edits(prefix + child.char, suffix[1:], maxedit-1, child, strings)
+			# Insert
+			self._find_edits(prefix + child.char, suffix, maxedit-1, child, strings)
+			# Delete
+			self._find_edits(prefix, suffix[1:], maxedit-1, child, strings)
 			
 	def __contains__(self, s):
-		curr = self.root
+		return self._contains_from_node(s, self.root)
+
+	def _contains_from_node(self, s, node):
+		curr = node
 		for c in s:
 			nxt = curr.children.get(c)
 			if nxt is None:
@@ -94,7 +98,7 @@ class Trie(object):
 		for child in node.children.itervalues():
 			self._str_helper(child, depth+1, lines)
 
-def loaded_trie():
+def get_loaded_trie():
 	"""Factory function for a trie loaded with word.list."""
 	t = Trie()
 	with open('word.list', 'r') as f:
@@ -119,7 +123,6 @@ def big_load():
 
 	Take 3 seconds and 206MB to load everything, which is acceptable to me.
 	"""
-	import datetime
 	t = Trie()
 	start = datetime.datetime.now()
 	with open('word.list', 'r') as f:
@@ -134,11 +137,38 @@ def big_load():
 import pprint
 def test_causes():
 	print 'Loading trie'
-	t = loaded_trie()
+	t = get_loaded_trie()
 	print 'Getting edits'
 	pprint.pprint(t.find_edits('causes', 1))
+
+def find_friend_closure(start):
+	"""Find the transitive closure of the friend relation, starting with `start`."""
+	t = get_loaded_trie()
+
+	all_friends = set([start])
+	to_expand = [start]
+
+	count = 0
+	while to_expand:
+		s = to_expand.pop(0)
+		friends = t.find_edits(s, 1)
+		for f in friends:
+			if f not in all_friends:
+				to_expand.append(f)
+				all_friends.add(f)
+
+		count += 1
+		print 'Expanded %d times. %d in queue.  %d friends so far.' % (count, len(to_expand), len(all_friends))
+	return all_friends
+
+def main():
+	start = datetime.datetime.now()
+	friends = find_friend_closure('causes')
+	print 'Took %s to find friends.' % (datetime.datetime.now() - start,)
+	print 'There are %d friends.' % (len(friends),)
 	
 if __name__ == '__main__':
 	#test_trie()
 	#big_load()
 	test_causes()
+	#main()
