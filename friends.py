@@ -12,6 +12,7 @@ This module tries to solve this problem.
 Checked the charset of the dictionary.  It is just a-z, which makes things simpler.
 """
 import datetime
+import unittest
 
 class Node(object):
 	__slots__ = ['char', 'is_word', 'children']
@@ -64,17 +65,21 @@ class Trie(object):
 
 		c = suffix[0]
 
+		# Delete -- Remove the leading character of the suffix and try again
+		# from the same place
+		if maxedit > 0:
+			self._find_edits(prefix, suffix[1:], maxedit-1, node, strings)
+
 		for child in node.children.itervalues():
+			new_prefix = prefix + child.char
 			if c == child.char:
 				# No edit
-				self._find_edits(prefix + c, suffix[1:], maxedit, child, strings)
-			else:
+				self._find_edits(new_prefix, suffix[1:], maxedit, child, strings)
+			elif maxedit > 0:
 				# Replace
-				self._find_edits(prefix + child.char, suffix[1:], maxedit-1, child, strings)
-			# Insert
-			self._find_edits(prefix + child.char, suffix, maxedit-1, child, strings)
-			# Delete
-			self._find_edits(prefix, suffix[1:], maxedit-1, child, strings)
+				self._find_edits(new_prefix, suffix[1:], maxedit-1, child, strings)
+				# Insert
+				self._find_edits(new_prefix, suffix, maxedit-1, child, strings)
 			
 	def __contains__(self, s):
 		return self._contains_from_node(s, self.root)
@@ -116,6 +121,41 @@ def test_trie():
 
 	for w in words:
 		assert w in t, 'Expected %s in the trie.'
+
+class TestTrie(unittest.TestCase):
+	def setUp(self):
+		self.t = Trie()
+
+	def test_adding_and_containment(self):
+		words = ['baz', 'foo', 'fob', 'far', 'food']
+		for w in words:
+			self.t.add(w)
+
+		for w in words:
+			assert w in self.t, 'Expected %s in the trie.'
+
+	def test_single_edits(self):
+		self.t.add('pizza')
+		expected_contents = set(['pizza'])
+
+		# Replace
+		#import pdb; pdb.set_trace()
+		self.assertEqual(set(self.t.find_edits("zizza", 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits("pizaa", 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits("pizzz", 1)), expected_contents)
+
+		# Insert
+		self.assertEqual(set(self.t.find_edits("izza", 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits("piza", 1)), expected_contents)
+		import pdb; pdb.set_trace()
+		self.assertEqual(set(self.t.find_edits("pizz", 1)), expected_contents)
+
+		# Delete
+		self.assertEqual(set(self.t.find_edits("ppizza", 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits("piizza", 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits("pizzaa", 1)), expected_contents)
+
+
 
 def big_load():
 	"""Quick test to see how long/how much memory it takes
@@ -170,5 +210,6 @@ def main():
 if __name__ == '__main__':
 	#test_trie()
 	#big_load()
-	test_causes()
+	#test_causes()
 	#main()
+	unittest.main()
