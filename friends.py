@@ -242,7 +242,10 @@ def find_friend_closure(start):
 				all_friends.add(f)
 
 		count += 1
-		print 'Expanded %d times. %d in queue.  %d friends so far.' % (count, len(to_expand), len(all_friends))
+		if count > 0 and count % 1000 == 0:
+			print 'Expanded %d times. %d in queue.  %d friends so far.' % (
+				count, len(to_expand), len(all_friends)
+			)
 	return all_friends
 
 def main():
