@@ -58,12 +58,11 @@ class Trie(object):
 			return
 
 		# If our consumed string matches a word in the dict, add it
-		if len(suffix) == 0:
-			if node.is_word:
-				strings.append(prefix)
-			return
+		if len(suffix) == 0 and node.is_word:
+			strings.append(prefix)
 
-		c = suffix[0]
+		# Make sure that no child chars can match if there is no suffix
+		c = suffix[0] if suffix else ''
 
 		# Delete -- Remove the leading character of the suffix and try again
 		# from the same place
@@ -76,8 +75,9 @@ class Trie(object):
 				# No edit
 				self._find_edits(new_prefix, suffix[1:], maxedit, child, strings)
 			elif maxedit > 0:
-				# Replace
-				self._find_edits(new_prefix, suffix[1:], maxedit-1, child, strings)
+				if len(suffix) > 0:
+					# Replace
+					self._find_edits(new_prefix, suffix[1:], maxedit-1, child, strings)
 				# Insert
 				self._find_edits(new_prefix, suffix, maxedit-1, child, strings)
 			
@@ -122,6 +122,15 @@ def test_trie():
 	for w in words:
 		assert w in t, 'Expected %s in the trie.'
 
+def all_strings_of_n(alphabet, n):
+	"""Generate all strings of length `n` using characters from `alphabet`."""
+	if n <= 0:
+		yield ''
+	else:
+		for string in all_strings_of_n(alphabet, n-1):
+			for char in alphabet:
+				yield string + char
+
 class TestTrie(unittest.TestCase):
 	def setUp(self):
 		self.t = Trie()
@@ -134,27 +143,70 @@ class TestTrie(unittest.TestCase):
 		for w in words:
 			assert w in self.t, 'Expected %s in the trie.'
 
-	def test_single_edits(self):
+	def test_single_edits_sparse(self):
+		"""Check edits from a single string in the trie."""
 		self.t.add('pizza')
 		expected_contents = set(['pizza'])
 
 		# Replace
-		#import pdb; pdb.set_trace()
-		self.assertEqual(set(self.t.find_edits("zizza", 1)), expected_contents)
-		self.assertEqual(set(self.t.find_edits("pizaa", 1)), expected_contents)
-		self.assertEqual(set(self.t.find_edits("pizzz", 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits('zizza', 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits('pizaa', 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits('pizzz', 1)), expected_contents)
 
 		# Insert
-		self.assertEqual(set(self.t.find_edits("izza", 1)), expected_contents)
-		self.assertEqual(set(self.t.find_edits("piza", 1)), expected_contents)
-		import pdb; pdb.set_trace()
-		self.assertEqual(set(self.t.find_edits("pizz", 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits('izza', 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits('piza', 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits('pizz', 1)), expected_contents)
 
 		# Delete
-		self.assertEqual(set(self.t.find_edits("ppizza", 1)), expected_contents)
-		self.assertEqual(set(self.t.find_edits("piizza", 1)), expected_contents)
-		self.assertEqual(set(self.t.find_edits("pizzaa", 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits('ppizza', 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits('piizza', 1)), expected_contents)
+		self.assertEqual(set(self.t.find_edits('pizzaa', 1)), expected_contents)
 
+	def test_single_edits_dense(self):
+		"""Pack the trie with all 3-char strings, then check that we get the
+		right number of edits.
+		"""
+		alphabet = 'abcdefghijk'
+		alpha_len = len(alphabet)
+		n = 3
+		for word in all_strings_of_n(alphabet, n):
+			self.t.add(word)
+
+		# Insert (any char in the alphabet anywhere)
+		# 'a' and 'b' can be inserted on either side of itself ('aab' and 'abb')
+		# so we subtrace off 2 to avoid overcounting.
+		self.assertEqual(len(set(self.t.find_edits('ab', 1))), 3*alpha_len - 2)
+
+		# Remove (any char in our string)
+		self.assertEqual(len(set(self.t.find_edits('bdfg', 1))), 4)
+
+		# Replacement (any char in string with a *different* char + exact match)
+		self.assertEqual(len(set(self.t.find_edits('ijk', 1))), 3*(alpha_len-1) + 1)
+
+
+	def test_longer_edits(self):
+		# Test empty trie
+		#self.assertEqual(set(self.t.find_edits('', 2000000000)), set())
+
+		STAR_WARS = [
+			'Luke Skywalker', 'Anakin Skywalker', 'Jedi Knights',
+			'Jedi', 'force grip', 'force throw', 'force push', 'force pull',
+			'force lift', 'Lucas Skywalker', 'George Lucas', 'george lucas'
+		]
+		for midichlorian in STAR_WARS:
+			self.t.add(midichlorian)
+
+		# Test case-sensitivity
+		self.assertEqual(set(self.t.find_edits('George Lucas', 1)), set(['George Lucas']))
+		self.assertEqual(set(self.t.find_edits('George Lucas', 2)), set(['George Lucas', 'george lucas']))
+
+		# Assorted long find_edits
+		self.assertEqual(set(self.t.find_edits('Looks Skywalker', 3)), set(['Luke Skywalker', 'Lucas Skywalker']))
+		self.assertEqual(set(self.t.find_edits('Skywalker', 6)), set(['Luke Skywalker', 'Lucas Skywalker']))
+		self.assertEqual(set(self.t.find_edits('force lightning', 6)), set(['force lift']))
+		self.assertEqual(set(self.t.find_edits('farce lucas', 5)), set(['force push', 'force lift', 'George Lucas', 'force pull', 'george lucas']))
+		self.assertEqual(set(self.t.find_edits('Jedi ! Knights', 2)), set(['Jedi Knights']))
 
 
 def big_load():
