@@ -12,13 +12,14 @@ This module tries to solve this problem.
 Checked the charset of the dictionary.  It is just a-z, which makes things simpler.
 """
 import datetime
+import pprint
 import unittest
 
 class Node(object):
 	__slots__ = ['char', 'is_word', 'children']
 
 	def __init__(self, char=None, is_word=False):
-		self.char = char 
+		self.char = char   # Could be dropped to lower memory usage
 		self.is_word = is_word
 		self.children = {}
 
@@ -53,6 +54,7 @@ class Trie(object):
 		self._find_edits('', s, maxedit, self.root, strings)
 		return strings
 
+	# XXX: Logic is well tested, but kind of ghetto... Should be simplified.
 	def _find_edits(self, prefix, suffix, maxedit, node, strings):
 		if maxedit < 0:
 			return
@@ -66,7 +68,7 @@ class Trie(object):
 
 		# Delete -- Remove the leading character of the suffix and try again
 		# from the same place
-		if maxedit > 0:
+		if maxedit > 0 and len(suffix) > 0:
 			self._find_edits(prefix, suffix[1:], maxedit-1, node, strings)
 
 		for child in node.children.itervalues():
@@ -111,16 +113,6 @@ def get_loaded_trie():
 			t.add(line.strip())
 	return t
 
-def test_trie():
-	t = Trie()
-	words = ['baz', 'foo', 'fob', 'far', 'food']
-	for w in words:
-		t.add(w)
-
-	print str(t)
-
-	for w in words:
-		assert w in t, 'Expected %s in the trie.'
 
 def all_strings_of_n(alphabet, n):
 	"""Generate all strings of length `n` using characters from `alphabet`."""
@@ -184,10 +176,9 @@ class TestTrie(unittest.TestCase):
 		# Replacement (any char in string with a *different* char + exact match)
 		self.assertEqual(len(set(self.t.find_edits('ijk', 1))), 3*(alpha_len-1) + 1)
 
-
 	def test_longer_edits(self):
 		# Test empty trie
-		#self.assertEqual(set(self.t.find_edits('', 2000000000)), set())
+		self.assertEqual(set(self.t.find_edits('', 2000000000)), set())
 
 		STAR_WARS = [
 			'Luke Skywalker', 'Anakin Skywalker', 'Jedi Knights',
@@ -226,7 +217,6 @@ def big_load():
 	print 'Elapsed: %s' % (datetime.datetime.now() - start)
 	raw_input('Waiting')
 
-import pprint
 def test_causes():
 	print 'Loading trie'
 	t = get_loaded_trie()
@@ -260,7 +250,6 @@ def main():
 	print 'There are %d friends.' % (len(friends),)
 	
 if __name__ == '__main__':
-	#test_trie()
 	#big_load()
 	#test_causes()
 	#main()
