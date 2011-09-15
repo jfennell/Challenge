@@ -10,6 +10,8 @@ This module tries to solve this problem.
 ---
 
 Checked the charset of the dictionary.  It is just a-z, which makes things simpler.
+
+78482 is the right answer (if you include "causes" itself).
 """
 import datetime
 import pprint
@@ -252,5 +254,5 @@ def main():
 if __name__ == '__main__':
 	#big_load()
 	#test_causes()
-	#main()
-	unittest.main()
+	main()
+	#unittest.main()
