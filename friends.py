@@ -5,7 +5,8 @@ word's social network consists of all of its friends, plus all of their
 friends, and all of their friends' friends, and so on. Write a program to tell
 us how big the social network for the word "causes" is, using this word list.
 
-This module tries to solve this problem.
+This module tries to solve this problem by iteratively finding all valid words
+that are within one edit distance of the current candidate.
 
 ---
 
@@ -40,7 +41,7 @@ def all_one_edits(word):
 
 def one_edit_find_friend_closures(start):
 	"""Factory function for a trie loaded with word.list."""
-	# Get the dictionary
+	# Get the dictionary, which I have hardcoded out of laziness
 	dictionary = set()
 	with open('word.list', 'r') as f:
 		for line in f:
