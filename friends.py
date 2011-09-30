@@ -260,13 +260,20 @@ A_TO_Z = tuple(chr(idx) for idx in xrange(97, 123))
 A_TO_Z_AND_EMPTY = tuple(list(A_TO_Z) + [''])
 def all_one_edits(word):
 	"""Generate all strings one edit from `word`."""
+	# Note that a generator is faster than appending
+	# to a result list (by cProfile)
+
+	# Avoid an extra call to len
+	n = len(word)
+
+	result = []
 	# Replace and delete
-	for i in xrange(len(word)):
+	for i in xrange(n):
 		for char in A_TO_Z_AND_EMPTY:
 			yield word[:i] + char + word[i+1:]
 
 	# Insert
-	for i in xrange(len(word)+1):
+	for i in xrange(n+1):
 		for char in A_TO_Z:
 			yield word[:i] + char + word[i:]
 
