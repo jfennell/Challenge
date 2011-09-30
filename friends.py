@@ -1,33 +1,45 @@
+#!/usr/bin/python
 """
-Two words are friends if they have a Levenshtein distance of 1. That is, you
-can add, remove, or substitute exactly one letter in word X to create word Y. A
-word's social network consists of all of its friends, plus all of their
-friends, and all of their friends' friends, and so on. Write a program to tell
-us how big the social network for the word "causes" is, using this word list.
+Script find the transitive closure of the friend relation.  See help string for
+more details.
 
-This module tries to solve this problem by iteratively finding all valid words
+This script tries to solve this problem by iteratively finding all valid words
 that are within one edit distance of the current candidate.
 
 ---
 
-Checked the charset of the dictionary.  It is just a-z, which makes things simpler.
+For the case of 'word.list' dictionary and the starting string 'causes':
+Checked the charset of the default dictionary.  It is just a-z, which makes
+things simpler.
 
 78482 is the right answer (if you include "causes" itself).
 """
 import datetime
+import optparse
+import sys
 import unittest
+
+_USAGE = """%prog [options] word
+
+Print the size of the transitive closure of the `friend` relation
+starting from AND INCLUDING word.
+
+Words are friends if they are within one edit (insert/delete/replace).
+
+The universe of words is defined by a dictionary, which can be overriden."""
 
 A_TO_Z = tuple(chr(idx) for idx in xrange(97, 123))
 A_TO_Z_AND_EMPTY = tuple(list(A_TO_Z) + [''])
 def all_one_edits(word):
-	"""Generate all strings one edit from `word`."""
+	"""Generate all strings one edit from `word`.
+
+	NOTE: Assumes the alphabet is [a-z]."""
 	# Note that a generator is faster than appending
 	# to a result list (by cProfile)
 
 	# Avoid an extra call to len
 	n = len(word)
 
-	result = []
 	# Replace and delete
 	for i in xrange(n):
 		for char in A_TO_Z_AND_EMPTY:
@@ -39,14 +51,8 @@ def all_one_edits(word):
 			yield word[:i] + char + word[i:]
 
 
-def one_edit_find_friend_closures(start):
-	"""Factory function for a trie loaded with word.list."""
-	# Get the dictionary, which I have hardcoded out of laziness
-	dictionary = set()
-	with open('word.list', 'r') as f:
-		for line in f:
-			dictionary.add(line.strip())
-
+def find_friend_closure(start, dictionary, verbose=False):
+	"""Find the closure of the friend relation over `dictionary` starting from `start`."""
 	all_friends = set([start])
 	to_expand = [start]
 
@@ -58,19 +64,45 @@ def one_edit_find_friend_closures(start):
 				to_expand.append(w)
 				all_friends.add(w)
 
-		count += 1
-		if count > 0 and count % 1000 == 0:
-			print 'Expanded %d times. %d in queue.  %d friends so far.' % (
-				count, len(to_expand), len(all_friends)
-			)
+		if verbose:
+			count += 1
+			if count > 0 and count % 1000 == 0:
+				print 'Expanded %d times. %d in queue.  %d friends so far.' % (
+					count, len(to_expand), len(all_friends)
+				)
 	return all_friends
 
 
-def main():
+def main(passed_args=None):
+	if passed_args is None:
+		passed_args = sys.argv
+
+	parser = optparse.OptionParser(_USAGE)
+	parser.add_option(
+		'-d', '--dictionary',
+		default='word.list',
+		help='Dictionary defining the universe of words, one per line [default: %default]'
+	)
+	parser.add_option(
+		'-v', '--verbose',
+		default=False,
+		action='store_true',
+		help='Print out timing info during execution [default: %default]'
+	)
+	ops, args = parser.parse_args(args=passed_args)
+
+	if not len(args) == 2:
+		parser.error('You must specify a single word to start finding friends of.')
+	word = args[1]
+
+	with open(ops.dictionary, 'r') as f:
+		dictionary = set(line.strip() for line in f)
+
 	start = datetime.datetime.now()
-	friends = one_edit_find_friend_closures('causes')
-	print 'Took %s to find friends.' % (datetime.datetime.now() - start,)
-	print 'There are %d friends.' % (len(friends),)
+	friends = find_friend_closure(word, dictionary, verbose=ops.verbose)
+	if ops.verbose:
+		print 'Took %s to find friends.' % (datetime.datetime.now() - start,)
+	print len(friends)
 
 	
 if __name__ == '__main__':
