@@ -45,7 +45,7 @@ func findFriendsClosure(start string, dictionary map[string]bool) map[string]boo
 	toExpand := make(chan string, 100000)
 	toExpand <- start
 
-	var alphabet string = "abcdefghijklmnopqrstuvwxyz"
+	var alphabet []string = strings.Split("abcdefghijklmnopqrstuvwxyz", "", -1)
 
 	count := 0
 	for curr := range toExpand {
@@ -67,14 +67,14 @@ func findFriendsClosure(start string, dictionary map[string]bool) map[string]boo
 	return allFriends
 }
 
-func allSingleEdits(word, alphabet string) <-chan string {
+func allSingleEdits(word string, alphabet []string) <-chan string {
 	n := len(word)
 	accum := make(chan string)
 
 	go func() {
 		for splitIdx := 0; splitIdx < n; splitIdx++ {
 			for charIdx := 0; charIdx < 26; charIdx++ {
-				char := string(alphabet[charIdx])
+				char := alphabet[charIdx]
 				accum <- word[:splitIdx] + char + word[splitIdx+1:]  // Replace
 				accum <- word[:splitIdx] + word[splitIdx+1:]         // Delete
 				accum <- word[:splitIdx] + char + word[splitIdx:]    // Insert
