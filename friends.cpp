@@ -7,7 +7,7 @@ void all_one_edits(std::string word)
 {
 	size_t n = word.length();
 
-	for(int i; i < n; ++i)
+	for(size_t i = 0; i < n; ++i)
 	{
 		for(std::string::const_iterator c = ALPHABET.begin();
 			c < ALPHABET.end();
@@ -20,9 +20,14 @@ void all_one_edits(std::string word)
 			  << word.substr(i+1)
 			  << std::endl;
 		}
+
+		std::cout
+			<< word.substr(0, i)
+			<< word.substr(i+1)
+			<< std::endl;
 	}
 
-	for(int i; i < n+1; ++i)
+	for(size_t i = 0; i < n+1; ++i)
 	{
 		for(std::string::const_iterator c = ALPHABET.begin();
 			c < ALPHABET.end();
@@ -41,7 +46,7 @@ int main()
 {
 	std::cout << "Hello world" << std::endl;
 	all_one_edits("");
-	std::cout << std::endl << std::endl;
+	std::cout << "---" << std::endl;
 	all_one_edits("X");
 	return 0;
 }
