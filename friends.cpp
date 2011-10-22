@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <list>
 #include <queue>
 #include <set>
@@ -40,14 +41,6 @@ std::list<std::string> all_one_edits(std::string word)
 		results.push_back(word + *c);
 	}
 
-	/*
-	for(std::list<std::string>::const_iterator res = results.begin();
-		res != results.end();
-		++res)
-	{
-		std::cout << *res << std::endl;
-	}
-	*/
 	return results;
 }
 
@@ -62,6 +55,7 @@ std::set<std::string> find_friend_closure(std::string start, std::set<std::strin
 	std::queue<std::string> expand_queue;
 	expand_queue.push(start);
 
+	size_t count = 0;
 	while (!expand_queue.empty())
 	{
 		std::string word = expand_queue.front();
@@ -78,18 +72,48 @@ std::set<std::string> find_friend_closure(std::string start, std::set<std::strin
 				all_friends.insert(*edit);
 			}
 		}
+
+		++count;
+		if (count > 0 && count % 1000 == 0) {
+			std::cout
+				<< "Expanded " << count << " times, "
+				<< expand_queue.size() << " in the queue, "
+				<< all_friends.size() << " friends so far."
+				<< std::endl;
+		}
 	}
 	return all_friends;
 }
 
 
-int main() 
+std::set<std::string> load_dictionary(const char* path)
 {
-	std::cout << "Hello world" << std::endl;
-	all_one_edits("");
-	std::cout << "---" << std::endl;
-	all_one_edits("X");
-	std::cout << "---" << std::endl;
-	all_one_edits("XX");
+	std::set<std::string> dictionary;
+
+	std::ifstream file(path);
+	if (file.is_open())
+	{
+		std::string line;
+		while (file.good())
+		{
+			getline(file, line);
+			dictionary.insert(line);
+		}
+	}
+	else
+	{
+		std::cout << "Unable to open file" << std::endl;
+	}
+
+	return dictionary;
+}
+
+
+int main()
+{
+	std::string word = "causes";
+	std::set<std::string> dictionary = load_dictionary("word.list");
+	std::set<std::string> friends = find_friend_closure(word, dictionary);
+	std::cout << word << " has " << friends.size() << " friends." << std::endl;
 	return 0;
 }
