@@ -11,10 +11,9 @@ std::string ALPHABET("abcdefghijklmnopqrstuvwxyz");
  * Generate all single edits for `word` assuming the
  * alphabet is [a-z].
  */
-std::list<std::string> all_one_edits(std::string word)
+void all_one_edits(const std::string& word, std::list<std::string>& edits)
 {
 	size_t n = word.length();
-	std::list<std::string> results;
 
 	for(size_t i = 0; i < n; ++i)
 	{
@@ -24,13 +23,13 @@ std::list<std::string> all_one_edits(std::string word)
 			++c)
 		{
 			// Replace
-			results.push_back(prefix + *c + word.substr(i+1));
+			edits.push_back(prefix + *c + word.substr(i+1));
 			// Insert
-			results.push_back(prefix + *c + word.substr(i));
+			edits.push_back(prefix + *c + word.substr(i));
 
 		}
 		// Delete
-		results.push_back(prefix + word.substr(i+1));
+		edits.push_back(prefix + word.substr(i+1));
 	}
 
 	// Inserting at the ever end of the string
@@ -38,17 +37,15 @@ std::list<std::string> all_one_edits(std::string word)
 		c < ALPHABET.end();
 		++c)
 	{
-		results.push_back(word + *c);
+		edits.push_back(word + *c);
 	}
-
-	return results;
 }
 
 
 /**
  * Find the closure of the friend relation over dictionary starting from start.
  */
-std::set<std::string> find_friend_closure(std::string start, std::set<std::string> dictionary)
+std::set<std::string> find_friend_closure(const std::string start, const std::set<std::string> dictionary)
 {
 	std::set<std::string> all_friends;
 	all_friends.insert(start);
@@ -61,7 +58,8 @@ std::set<std::string> find_friend_closure(std::string start, std::set<std::strin
 		std::string word = expand_queue.front();
 		expand_queue.pop();
 
-		std::list<std::string> edits = all_one_edits(word);
+		std::list<std::string> edits;
+		all_one_edits(word, edits);
 		for(std::list<std::string>::const_iterator edit = edits.begin();
 			edit != edits.end();
 			++edit)
