@@ -18,21 +18,30 @@ void all_one_edits(const std::string& word, std::list<std::string>& edits)
 	for(size_t i = 0; i < n; ++i)
 	{
 		std::string prefix = word.substr(0, i);
+		std::string replace_tail = word.substr(i+1);
+		std::string insert_tail = word.substr(i);
+
+		// Delete - 'Replace' with no character
+		edits.push_back(prefix + replace_tail);
+
 		for(std::string::const_iterator c = ALPHABET.begin();
 			c < ALPHABET.end();
 			++c)
 		{
+			if (c == ALPHABET.begin()) {
+				prefix.push_back(*c);
+			} else {
+				// XXX: Can I always safely do just this?
+				prefix.replace(i, 1, 1, *c);
+			}
 			// Replace
-			edits.push_back(prefix + *c + word.substr(i+1));
+			edits.push_back(prefix + replace_tail);
 			// Insert
-			edits.push_back(prefix + *c + word.substr(i));
-
+			edits.push_back(prefix + insert_tail);
 		}
-		// Delete
-		edits.push_back(prefix + word.substr(i+1));
 	}
 
-	// Inserting at the ever end of the string
+	// Last insert: adding to the end of the string
 	for(std::string::const_iterator c = ALPHABET.begin();
 		c < ALPHABET.end();
 		++c)
@@ -64,7 +73,12 @@ std::set<std::string> find_friend_closure(const std::string start, const std::se
 			edit != edits.end();
 			++edit)
 		{
-			if (dictionary.count(*edit) > 0 && all_friends.count(*edit) == 0)
+			// If the dict has the edit then it is a valid word,
+			// and if all_friends doesn't have it then it still needs expansion
+			//if (dictionary.count(*edit) > 0 && all_friends.count(*edit) == 0)
+			// XXX Seems to be the slow bit (other order even worse!)
+			if (dictionary.find(*edit) != dictionary.end() &&
+				all_friends.find(*edit) == all_friends.end())
 			{
 				expand_queue.push(*edit);
 				all_friends.insert(*edit);
@@ -109,6 +123,32 @@ std::set<std::string> load_dictionary(const char* path)
 
 int main()
 {
+
+	/*
+	std::list<std::string> edits;
+	all_one_edits("X", edits);
+	for(std::list<std::string>::const_iterator it = edits.begin();
+		it != edits.end();
+		++it)
+	{
+		std::cout << *it << std::endl;
+	}
+
+	std::cout
+		<< "---------"
+		<< "---------"
+		<< "---------"
+		<< std::endl;
+
+	edits.clear();
+	all_one_edits("XX", edits);
+	for(std::list<std::string>::const_iterator it = edits.begin();
+		it != edits.end();
+		++it)
+	{
+		std::cout << *it << std::endl;
+	}
+	*/
 	std::string word = "causes";
 	std::set<std::string> dictionary = load_dictionary("word.list");
 	std::set<std::string> friends = find_friend_closure(word, dictionary);
