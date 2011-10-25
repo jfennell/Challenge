@@ -92,6 +92,7 @@ StringSet find_friend_closure(const std::string start, const StringSet dictionar
 			}
 		}
 
+		// I can drop .5 seconds by removing the printing
 		++count;
 		if (count > 0 && count % 1000 == 0) {
 			std::cout
