@@ -2,8 +2,10 @@
 #include <fstream>
 #include <list>
 #include <queue>
-#include <set>
 #include <string>
+#include <tr1/unordered_set>
+
+typedef std::tr1::unordered_set<std::string> StringSet;
 
 std::string ALPHABET("abcdefghijklmnopqrstuvwxyz");
 
@@ -54,9 +56,9 @@ void all_one_edits(const std::string& word, std::list<std::string>& edits)
 /**
  * Find the closure of the friend relation over dictionary starting from start.
  */
-std::set<std::string> find_friend_closure(const std::string start, const std::set<std::string> dictionary)
+StringSet find_friend_closure(const std::string start, const StringSet dictionary)
 {
-	std::set<std::string> all_friends;
+	StringSet all_friends;
 	all_friends.insert(start);
 	std::queue<std::string> expand_queue;
 	expand_queue.push(start);
@@ -98,9 +100,9 @@ std::set<std::string> find_friend_closure(const std::string start, const std::se
 }
 
 
-std::set<std::string> load_dictionary(const char* path)
+StringSet load_dictionary(const char* path)
 {
-	std::set<std::string> dictionary;
+	StringSet dictionary;
 
 	std::ifstream file(path);
 	if (file.is_open())
@@ -123,35 +125,9 @@ std::set<std::string> load_dictionary(const char* path)
 
 int main()
 {
-
-	/*
-	std::list<std::string> edits;
-	all_one_edits("X", edits);
-	for(std::list<std::string>::const_iterator it = edits.begin();
-		it != edits.end();
-		++it)
-	{
-		std::cout << *it << std::endl;
-	}
-
-	std::cout
-		<< "---------"
-		<< "---------"
-		<< "---------"
-		<< std::endl;
-
-	edits.clear();
-	all_one_edits("XX", edits);
-	for(std::list<std::string>::const_iterator it = edits.begin();
-		it != edits.end();
-		++it)
-	{
-		std::cout << *it << std::endl;
-	}
-	*/
 	std::string word = "causes";
-	std::set<std::string> dictionary = load_dictionary("word.list");
-	std::set<std::string> friends = find_friend_closure(word, dictionary);
+	StringSet dictionary = load_dictionary("word.list");
+	StringSet friends = find_friend_closure(word, dictionary);
 	std::cout << word << " has " << friends.size() << " friends." << std::endl;
 	return 0;
 }
